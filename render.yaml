@@ -3,7 +3,7 @@ services:
   - type: web
     name: ghana-land-erp-backend
     runtime: node
-    region: frankfurt  # Choose closest to target users
+    region: frankfurt
     plan: free
     rootDir: backend
     buildCommand: npm install
@@ -18,17 +18,11 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-        sync: false
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
 
   # Frontend Static Site
   - type: web
     name: ghana-land-erp-frontend
     runtime: static
-    region: frankfurt
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
