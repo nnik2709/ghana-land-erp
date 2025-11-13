@@ -1,12 +1,20 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-// Use persistent disk path in production (Render.com), local path in development
+// Use local writable path (Render free tier has ephemeral storage)
 const dbPath = process.env.NODE_ENV === 'production'
-  ? '/data/land-erp.db'
+  ? path.join(__dirname, '../../data/land-erp.db')
   : path.join(__dirname, '../../data/land-erp.db');
+
+// Ensure data directory exists
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+  console.log(`📁 Created database directory: ${dbDir}`);
+}
 
 const db = new Database(dbPath);
 
