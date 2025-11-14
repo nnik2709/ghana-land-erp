@@ -1,0 +1,39 @@
+graph TD
+    subgraph OpenSource["Open Source Solution - $181k Year 1"]
+        OS_DB["PostgreSQL + PostGIS<br/>$0 (Free)"]
+        OS_Server["GeoServer<br/>$0 (Free)"]
+        OS_Desktop["QGIS (20 licenses)<br/>$0 (Free)"]
+        OS_Mobile["QField<br/>$0 (Free)"]
+        OS_Imagery["Sentinel-2 + Planet<br/>$20k/year"]
+        OS_Services["Professional Services<br/>$161k (one-time)"]
+    end
+
+    subgraph ESRI["ESRI Solution - $250k Year 1"]
+        ESRI_DB["ArcGIS Enterprise SDE<br/>$50k/year"]
+        ESRI_Server["ArcGIS Server<br/>$40k/year"]
+        ESRI_Desktop["ArcGIS Pro (20 licenses)<br/>$30k/year"]
+        ESRI_Mobile["ArcGIS Field Maps<br/>$10k/year"]
+        ESRI_Imagery["ArcGIS Imagery<br/>$25k/year"]
+        ESRI_Services["Implementation Services<br/>$95k (one-time)"]
+    end
+
+    OS_DB --> OS_Total["Year 1: $181k<br/>Year 2+: $81k/year"]
+    OS_Server --> OS_Total
+    OS_Desktop --> OS_Total
+    OS_Mobile --> OS_Total
+    OS_Imagery --> OS_Total
+    OS_Services --> OS_Total
+
+    ESRI_DB --> ESRI_Total["Year 1: $250k<br/>Year 2+: $200k/year"]
+    ESRI_Server --> ESRI_Total
+    ESRI_Desktop --> ESRI_Total
+    ESRI_Mobile --> ESRI_Total
+    ESRI_Imagery --> ESRI_Total
+    ESRI_Services --> ESRI_Total
+
+    OS_Total --> Savings["5-Year Savings:<br/>$545,000<br/>(52% reduction)"]
+    ESRI_Total --> Savings
+
+    style OpenSource fill:#4CAF50,color:#fff
+    style ESRI fill:#F44336,color:#fff
+    style Savings fill:#FFC107,color:#000

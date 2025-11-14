@@ -5,7 +5,7 @@ import { Container, Grid, Typography, Card, CardContent } from '@mui/material';
 import api from '../services/api';
 
 export default function CitizenDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 

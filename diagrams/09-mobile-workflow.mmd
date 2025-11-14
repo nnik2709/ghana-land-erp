@@ -1,0 +1,41 @@
+flowchart TD
+    Start([Surveyor arrives<br/>at property])
+
+    Start --> Open[Open QField app]
+    Open --> Load[Load survey project<br/>Offline mode enabled]
+    Load --> Satellite[View satellite basemap<br/>Sentinel-2 imagery]
+
+    Satellite --> GPS[Enable GPS<br/>Wait for accuracy < 5m]
+    GPS --> Draw[Draw property boundary<br/>Walk perimeter with GPS]
+
+    Draw --> Photos[Take photos<br/>Corner markers, features]
+    Photos --> Form[Fill survey form<br/>Owner name, land use, notes]
+
+    Form --> Validate{Validation<br/>checks}
+    Validate -->|Fail| Error[Show errors:<br/>- Self-intersection<br/>- Too small area]
+    Error --> Draw
+
+    Validate -->|Pass| Save[Save to local storage<br/>SQLite database]
+    Save --> Continue{More<br/>properties?}
+
+    Continue -->|Yes| Start
+    Continue -->|No| Office[Return to office]
+
+    Office --> Wifi[Connect to WiFi]
+    Wifi --> Sync[QField Cloud Sync]
+    Sync --> Upload[Upload to PostGIS<br/>via QGIS/API]
+
+    Upload --> Backend[Backend validation<br/>Overlap check]
+    Backend --> Approved{Approved?}
+
+    Approved -->|No| Review[Send for review<br/>Flag conflicts]
+    Approved -->|Yes| Insert[Insert into<br/>cadastral_parcels]
+
+    Insert --> Blockchain[Create blockchain token<br/>Hash geometry]
+    Blockchain --> Done([Survey complete])
+
+    style Start fill:#4CAF50,color:#fff
+    style Done fill:#4CAF50,color:#fff
+    style Error fill:#F44336,color:#fff
+    style Validate fill:#FF9800,color:#fff
+    style Approved fill:#FF9800,color:#fff

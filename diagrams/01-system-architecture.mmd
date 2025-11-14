@@ -1,0 +1,61 @@
+flowchart TB
+    subgraph Layer1["PRESENTATION LAYER"]
+        WebApp["React Web App<br/>(Leaflet.js Maps)"]
+        MobileApp["QField Mobile<br/>(Android/iOS)"]
+        Desktop["QGIS Desktop<br/>(Staff Workstations)"]
+    end
+
+    subgraph Layer2["API LAYER"]
+        NodeAPI["Node.js/Express API<br/>Port 5000"]
+        GeoServerAPI["GeoServer REST API<br/>Port 8080"]
+        Auth["JWT Authentication"]
+    end
+
+    subgraph Layer3["SERVICE LAYER"]
+        GeoServer["GeoServer 2.24<br/>WMS/WFS/WCS"]
+        TileServer["Vector Tile Server<br/>pg_tileserv"]
+        Processing["QGIS Server<br/>Geoprocessing"]
+    end
+
+    subgraph Layer4["DATA LAYER"]
+        PostGIS["PostgreSQL 15 + PostGIS 3.4<br/>10M+ Parcels"]
+        Indexes["Spatial Indexes (GIST)<br/>Partitioning by Region"]
+        CRS["Coordinate Systems<br/>EPSG:2136 | EPSG:4326"]
+    end
+
+    subgraph Layer5["STORAGE LAYER"]
+        Imagery["Satellite Imagery<br/>COG Files (S3/MinIO)"]
+        Documents["Survey PDFs<br/>Title Deeds"]
+        Backup["Backup & Archive<br/>Incremental Dumps"]
+    end
+
+    subgraph Layer6["INTEGRATION LAYER"]
+        GELIS["GELIS System<br/>(Existing Land Database)"]
+        Payment["Payment Gateway"]
+        Blockchain["Blockchain Network<br/>(Geometry Hashing)"]
+    end
+
+    WebApp --> NodeAPI
+    MobileApp --> NodeAPI
+    Desktop --> PostGIS
+
+    NodeAPI --> GeoServer
+    NodeAPI --> PostGIS
+    GeoServerAPI --> GeoServer
+
+    GeoServer --> PostGIS
+    GeoServer --> Imagery
+    TileServer --> PostGIS
+
+    PostGIS --> Backup
+
+    NodeAPI --> GELIS
+    NodeAPI --> Payment
+    NodeAPI --> Blockchain
+
+    style Layer1 fill:#e1f5e1
+    style Layer2 fill:#e3f2fd
+    style Layer3 fill:#fff9c4
+    style Layer4 fill:#fce4ec
+    style Layer5 fill:#f3e5f5
+    style Layer6 fill:#e0f2f1

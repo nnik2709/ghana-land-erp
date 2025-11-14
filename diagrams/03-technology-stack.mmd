@@ -1,0 +1,79 @@
+graph LR
+    subgraph Frontend["Frontend Technologies"]
+        React["React 18.3.1"]
+        Leaflet["Leaflet.js<br/>Interactive Maps"]
+        Geoman["Leaflet Geoman<br/>Drawing Tools"]
+        Turf["Turf.js<br/>Spatial Analysis"]
+    end
+
+    subgraph Backend["Backend Technologies"]
+        Node["Node.js/Express"]
+        PG["pg (PostgreSQL Driver)"]
+        JWT["JWT Authentication"]
+    end
+
+    subgraph Database["Spatial Database"]
+        PostgreSQL["PostgreSQL 15"]
+        PostGIS_Ext["PostGIS 3.4 Extension"]
+        GIST["GIST Spatial Index"]
+    end
+
+    subgraph MapServers["Map Services"]
+        GeoSrv["GeoServer 2.24"]
+        TileSrv["pg_tileserv<br/>(Vector Tiles)"]
+        QGISServ["QGIS Server<br/>(Geoprocessing)"]
+    end
+
+    subgraph Desktop["Desktop Tools"]
+        QGIS["QGIS 3.34 LTR"]
+        Plugins["QField Sync Plugin"]
+    end
+
+    subgraph Mobile["Mobile Apps"]
+        QField["QField 3.0"]
+        GPS["GPS Integration"]
+    end
+
+    subgraph Storage["Storage Systems"]
+        S3["MinIO (S3-compatible)"]
+        COG["Cloud-Optimized GeoTIFF"]
+    end
+
+    subgraph Imagery["Satellite Data"]
+        Sentinel["Sentinel-2 (Free)<br/>10m resolution"]
+        Planet["Planet (Paid)<br/>3m resolution"]
+        Maxar["Maxar (Paid)<br/>30cm resolution"]
+    end
+
+    React --> Leaflet
+    Leaflet --> Geoman
+    Leaflet --> Turf
+    React --> Node
+
+    Node --> PG
+    PG --> PostgreSQL
+    PostgreSQL --> PostGIS_Ext
+    PostGIS_Ext --> GIST
+
+    Node --> GeoSrv
+    GeoSrv --> PostgreSQL
+    TileSrv --> PostgreSQL
+
+    QGIS --> PostgreSQL
+    QGIS --> Plugins
+    Plugins --> QField
+
+    GeoSrv --> S3
+    S3 --> COG
+    Sentinel --> COG
+    Planet --> COG
+    Maxar --> COG
+
+    style Frontend fill:#4CAF50,color:#fff
+    style Backend fill:#2196F3,color:#fff
+    style Database fill:#F44336,color:#fff
+    style MapServers fill:#FF9800,color:#fff
+    style Desktop fill:#9C27B0,color:#fff
+    style Mobile fill:#00BCD4,color:#fff
+    style Storage fill:#607D8B,color:#fff
+    style Imagery fill:#795548,color:#fff

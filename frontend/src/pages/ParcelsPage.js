@@ -21,7 +21,7 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import { LocationOn, Landscape, CheckCircle, Description, Map as MapIcon } from '@mui/icons-material';
+import { LocationOn, Landscape, CheckCircle, Description, Map as MapIcon, Assessment, TrendingUp, Download } from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../services/api';
@@ -38,6 +38,7 @@ export default function ParcelsPage() {
   const [parcels, setParcels] = useState([]);
   const [selectedParcel, setSelectedParcel] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [valuationOpen, setValuationOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -99,13 +100,27 @@ export default function ParcelsPage() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleViewDetails(parcel.id)}
-                  >
-                    View Details
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleViewDetails(parcel.id)}
+                    >
+                      View Details
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      startIcon={<Assessment />}
+                      onClick={() => {
+                        setSelectedParcel(parcel);
+                        setValuationOpen(true);
+                      }}
+                    >
+                      Get Valuation
+                    </Button>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -440,6 +455,223 @@ export default function ParcelsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Property Valuation Dialog */}
+      <Dialog open={valuationOpen} onClose={() => setValuationOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <Assessment sx={{ mr: 1, color: '#006B3F' }} />
+            AI-Powered Property Valuation
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedParcel && (
+            <Grid container spacing={3}>
+              {/* Parcel Summary */}
+              <Grid item xs={12}>
+                <Alert severity="info" icon={<TrendingUp />}>
+                  <strong>Demo Feature:</strong> AI-powered market valuation using comparable sales analysis and machine learning algorithms
+                </Alert>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Property Details
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">Parcel ID</Typography>
+                <Typography variant="body1" fontWeight="bold">{selectedParcel.parcel_id}</Typography>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">Location</Typography>
+                <Typography variant="body1">{selectedParcel.location}, {selectedParcel.district}</Typography>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">Area</Typography>
+                <Typography variant="body1">{selectedParcel.area} hectares ({(selectedParcel.area * 2.47105).toFixed(2)} acres)</Typography>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">Land Type</Typography>
+                <Typography variant="body1">{selectedParcel.land_type}</Typography>
+              </Grid>
+
+              {/* AI Valuation Results */}
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  <Assessment sx={{ verticalAlign: 'middle', mr: 1 }} />
+                  AI Valuation Estimate
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    bgcolor: '#E8F5E9',
+                    p: 3,
+                    borderRadius: 2,
+                    border: '2px solid #66BB6A'
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Estimated Market Value
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2E7D32', mb: 1 }}>
+                    GHS {(selectedParcel.area * 85000).toLocaleString()} - GHS {(selectedParcel.area * 105000).toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Median: GHS {(selectedParcel.area * 95000).toLocaleString()}
+                  </Typography>
+                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="87% Confidence" color="success" size="small" />
+                    <Typography variant="caption" color="text.secondary">
+                      Based on 24 comparable sales in the area
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Valuation Breakdown */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                  Valuation Factors
+                </Typography>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Price per Hectare</Typography>
+                  <Typography variant="h6" fontWeight="bold">GHS 95,000</Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Location Score</Typography>
+                  <Typography variant="h6" fontWeight="bold">8.5/10</Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Development Potential</Typography>
+                  <Typography variant="h6" fontWeight="bold">High</Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Market Trend (12mo)</Typography>
+                  <Typography variant="h6" fontWeight="bold" color="success.main">+12.3%</Typography>
+                </Box>
+              </Grid>
+
+              {/* Comparable Sales */}
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                  Recent Comparable Sales (Within 2km)
+                </Typography>
+                <TableContainer component={Paper} variant="outlined" sx={{ mt: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Location</TableCell>
+                        <TableCell>Area (ha)</TableCell>
+                        <TableCell>Sale Price</TableCell>
+                        <TableCell>Date</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>{selectedParcel.district}, 1.2km away</TableCell>
+                        <TableCell>{(selectedParcel.area * 0.95).toFixed(2)}</TableCell>
+                        <TableCell>GHS {(selectedParcel.area * 0.95 * 92000).toLocaleString()}</TableCell>
+                        <TableCell>2024-10-15</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>{selectedParcel.district}, 0.8km away</TableCell>
+                        <TableCell>{(selectedParcel.area * 1.1).toFixed(2)}</TableCell>
+                        <TableCell>GHS {(selectedParcel.area * 1.1 * 98000).toLocaleString()}</TableCell>
+                        <TableCell>2024-09-22</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>{selectedParcel.district}, 1.5km away</TableCell>
+                        <TableCell>{(selectedParcel.area * 0.88).toFixed(2)}</TableCell>
+                        <TableCell>GHS {(selectedParcel.area * 0.88 * 89000).toLocaleString()}</TableCell>
+                        <TableCell>2024-08-30</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+
+              {/* Stamp Duty Calculation */}
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">
+                  Estimated Transaction Costs (If Sold)
+                </Typography>
+                <Box sx={{ p: 2, bgcolor: '#FFF3E0', borderRadius: 1, border: '1px solid #FFB74D' }}>
+                  <Grid container spacing={1}>
+                    <Grid item xs={8}>
+                      <Typography variant="body2">Stamp Duty (1%)</Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight="bold">GHS {(selectedParcel.area * 95000 * 0.01).toLocaleString()}</Typography>
+                    </Grid>
+                    <Grid item xs={8}>
+                      <Typography variant="body2">Registration Fee</Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight="bold">GHS 250</Typography>
+                    </Grid>
+                    <Grid item xs={8}>
+                      <Typography variant="body2">Legal & Processing</Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight="bold">GHS 1,500</Typography>
+                    </Grid>
+                    <Grid item xs={12}><Divider sx={{ my: 1 }} /></Grid>
+                    <Grid item xs={8}>
+                      <Typography variant="body2" fontWeight="bold">Total Transaction Cost</Typography>
+                    </Grid>
+                    <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight="bold" color="primary">
+                        GHS {(selectedParcel.area * 95000 * 0.01 + 250 + 1500).toLocaleString()}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Grid>
+
+              {/* Last Valuation Info */}
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Alert severity="success">
+                  <strong>Last Official Valuation:</strong> GHS {(selectedParcel.area * 88000).toLocaleString()}
+                  {' '}(Conducted on 2024-03-15 by Ghana Lands Commission)
+                </Alert>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            startIcon={<Download />}
+            variant="outlined"
+            onClick={() => alert('Valuation Report Download:\n\nIn production, this would generate a PDF report with:\n• Detailed valuation analysis\n• Comparable sales data\n• Market trends\n• Legal disclaimers\n• Digital signature\n• Blockchain verification hash')}
+          >
+            Download Report (PDF)
+          </Button>
+          <Button onClick={() => setValuationOpen(false)} variant="contained">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

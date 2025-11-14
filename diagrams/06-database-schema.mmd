@@ -1,0 +1,67 @@
+erDiagram
+    CADASTRAL_PARCELS ||--o{ LAND_TITLES : "has"
+    LAND_TITLES ||--o{ MORTGAGES : "secures"
+    CADASTRAL_PARCELS ||--o{ SURVEYS : "created_from"
+    LAND_TITLES ||--o{ APPLICATIONS : "requested_by"
+    USERS ||--o{ SURVEYS : "submits"
+    USERS ||--o{ APPLICATIONS : "creates"
+
+    CADASTRAL_PARCELS {
+        uuid id PK
+        varchar parcel_number UK
+        geometry geometry_4326
+        geometry geometry_2136
+        decimal area_sqm
+        geometry centroid
+        varchar region
+        varchar status
+        varchar geometry_hash
+        varchar blockchain_token_id
+    }
+
+    LAND_TITLES {
+        uuid id PK
+        varchar title_number UK
+        uuid parcel_id FK
+        varchar owner_name
+        date issue_date
+        boolean has_mortgage
+        varchar blockchain_token_id
+    }
+
+    MORTGAGES {
+        uuid id PK
+        uuid title_id FK
+        varchar lender_name
+        decimal amount
+        date start_date
+        date maturity_date
+        varchar status
+    }
+
+    SURVEYS {
+        uuid id PK
+        uuid parcel_id FK
+        uuid surveyor_id FK
+        geometry survey_geometry
+        varchar accuracy_rating
+        integer confidence_score
+        date survey_date
+    }
+
+    APPLICATIONS {
+        uuid id PK
+        uuid applicant_id FK
+        uuid parcel_id FK
+        varchar application_type
+        varchar status
+        date submitted_at
+    }
+
+    USERS {
+        uuid id PK
+        varchar email UK
+        varchar full_name
+        varchar role
+        timestamp created_at
+    }

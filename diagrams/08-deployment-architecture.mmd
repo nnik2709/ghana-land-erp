@@ -1,0 +1,66 @@
+graph TB
+    subgraph Internet["Internet"]
+        Users["Citizens, Surveyors,<br/>Officers, Admins"]
+    end
+
+    subgraph LoadBalancer["Load Balancer (Nginx)"]
+        LB["nginx:443<br/>(SSL/TLS)"]
+    end
+
+    subgraph AppServers["Application Servers"]
+        App1["Node.js API<br/>Server 1:5000"]
+        App2["Node.js API<br/>Server 2:5000"]
+    end
+
+    subgraph MapServices["Map Services"]
+        Geo1["GeoServer 1:8080<br/>(WMS/WFS)"]
+        Geo2["GeoServer 2:8080<br/>(WMS/WFS)"]
+        Tile["Tile Server:7800<br/>(Vector Tiles)"]
+    end
+
+    subgraph Database["Database Cluster"]
+        PG_Primary["PostgreSQL Primary<br/>+ PostGIS"]
+        PG_Replica1["PostgreSQL Replica 1<br/>(Read-only)"]
+        PG_Replica2["PostgreSQL Replica 2<br/>(Read-only)"]
+    end
+
+    subgraph ObjectStorage["Object Storage"]
+        MinIO["MinIO S3<br/>(Satellite Imagery)"]
+    end
+
+    subgraph Monitoring["Monitoring & Logs"]
+        Grafana["Grafana Dashboard"]
+        Prometheus["Prometheus Metrics"]
+        Logs["ELK Stack (Logs)"]
+    end
+
+    Users --> LB
+    LB --> App1
+    LB --> App2
+
+    App1 --> Geo1
+    App1 --> PG_Primary
+    App2 --> Geo2
+    App2 --> PG_Primary
+
+    Geo1 --> PG_Replica1
+    Geo2 --> PG_Replica2
+    Tile --> PG_Replica1
+
+    Geo1 --> MinIO
+    Geo2 --> MinIO
+
+    PG_Primary --> PG_Replica1
+    PG_Primary --> PG_Replica2
+
+    App1 --> Prometheus
+    App2 --> Prometheus
+    Prometheus --> Grafana
+
+    style Internet fill:#e3f2fd
+    style LoadBalancer fill:#fff3e0
+    style AppServers fill:#e8f5e9
+    style MapServices fill:#fce4ec
+    style Database fill:#f3e5f5
+    style ObjectStorage fill:#e0f2f1
+    style Monitoring fill:#fff9c4

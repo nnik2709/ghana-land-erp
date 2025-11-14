@@ -28,6 +28,8 @@ import EducationalPortalPage from './pages/EducationalPortalPage';
 import AuditLogPage from './pages/AuditLogPage';
 import SupportPage from './pages/SupportPage';
 import SettingsPage from './pages/SettingsPage';
+import SpatialDashboardPage from './pages/SpatialDashboardPage';
+import GISDemoPage from './pages/GISDemoPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -47,6 +49,8 @@ function App() {
             <Route path="/officer" element={<PrivateRoute><OfficerDashboard /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
             <Route path="/parcels" element={<PrivateRoute><ParcelsPage /></PrivateRoute>} />
+            <Route path="/spatial" element={<PrivateRoute><SpatialDashboardPage /></PrivateRoute>} />
+            <Route path="/gis-demo" element={<PrivateRoute><GISDemoPage /></PrivateRoute>} />
             <Route path="/titles" element={<PrivateRoute><TitlesPage /></PrivateRoute>} />
             <Route path="/payments" element={<PrivateRoute><PaymentsPage /></PrivateRoute>} />
             <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />

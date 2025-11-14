@@ -1,0 +1,39 @@
+sequenceDiagram
+    participant Surveyor
+    participant QField
+    participant API
+    participant PostGIS
+    participant Validation
+    participant Blockchain
+    participant GeoServer
+
+    Surveyor->>QField: Draw property boundary<br/>(GPS + Satellite overlay)
+    QField->>QField: Capture offline<br/>(Store locally)
+
+    Note over QField,API: When connectivity available
+
+    QField->>API: POST /api/surveys/submit<br/>(GeoJSON polygon)
+    API->>PostGIS: ST_IsValid(geometry)
+    PostGIS-->>API: Topology check: PASS
+
+    API->>PostGIS: Check overlaps<br/>ST_Intersects(new, existing)
+    PostGIS-->>API: No overlaps found
+
+    API->>Validation: Calculate area, accuracy<br/>Generate confidence score
+    Validation-->>API: Area: 2,450 sqm<br/>Confidence: 85%
+
+    API->>PostGIS: INSERT INTO cadastral_parcels
+    PostGIS-->>API: Parcel ID: abc-123
+
+    API->>Blockchain: Hash geometry<br/>SHA-256(GeoJSON)
+    Blockchain-->>API: Token ID: 0x789def
+
+    API->>PostGIS: UPDATE parcel<br/>SET blockchain_token_id
+
+    Note over GeoServer,PostGIS: Auto-refresh
+
+    GeoServer->>PostGIS: Fetch new parcels<br/>(WFS query)
+    PostGIS-->>GeoServer: Return geometry
+
+    API-->>QField: Success + Parcel ID
+    QField-->>Surveyor: Survey approved ✓

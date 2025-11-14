@@ -1,0 +1,50 @@
+flowchart LR
+    subgraph User["User Actions"]
+        Draw["User draws polygon<br/>on map (Leaflet Geoman)"]
+    end
+
+    subgraph Client["Client-Side Processing"]
+        GeoJSON["Convert to GeoJSON<br/>{type: 'Polygon', coordinates: [...]}"]
+        API_Call["POST /api/spatial/analyze-area"]
+    end
+
+    subgraph Server["Server-Side Processing"]
+        Parse["Parse GeoJSON"]
+        Query1["PostGIS Query 1:<br/>ST_Intersects(parcel.geom, area)"]
+        Query2["PostGIS Query 2:<br/>Find titles WHERE parcel_id IN (...)"]
+        Query3["PostGIS Query 3:<br/>Find mortgages WHERE title_id IN (...)"]
+        Stats["Calculate Statistics:<br/>- Total area<br/>- Count properties<br/>- Count titles<br/>- Count mortgages"]
+    end
+
+    subgraph Database["Database Execution"]
+        Index["Use GIST Index<br/>(Fast spatial search)"]
+        Filter["Filter by status, region"]
+        Join["JOIN titles, mortgages"]
+        Return["Return results"]
+    end
+
+    subgraph Response["Response to Client"]
+        JSON["JSON Response:<br/>{parcels: [], titles: [],<br/>mortgages: [], stats: {}}"]
+        Render["Render on map:<br/>- Highlight parcels<br/>- Show statistics<br/>- Display tables"]
+    end
+
+    Draw --> GeoJSON
+    GeoJSON --> API_Call
+    API_Call --> Parse
+    Parse --> Query1
+    Query1 --> Index
+    Index --> Filter
+    Filter --> Query2
+    Filter --> Query3
+    Query2 --> Join
+    Query3 --> Join
+    Join --> Stats
+    Stats --> Return
+    Return --> JSON
+    JSON --> Render
+
+    style User fill:#e8f5e9
+    style Client fill:#e3f2fd
+    style Server fill:#fff3e0
+    style Database fill:#fce4ec
+    style Response fill:#f3e5f5

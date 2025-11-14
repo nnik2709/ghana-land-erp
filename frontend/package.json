@@ -6,10 +6,13 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@geoman-io/leaflet-geoman-free": "^2.18.3",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "@turf/turf": "^7.2.0",
     "axios": "^1.6.2",
     "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
