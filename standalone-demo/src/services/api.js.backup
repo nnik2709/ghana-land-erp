@@ -1,0 +1,415 @@
+// Mock API service - no backend needed
+// Simulates all API calls with hardcoded data
+
+const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Mock data
+const MOCK_PARCELS = [
+  {
+    id: 'GH-ACC-12345',
+    parcel_number: 'GH-ACC-12345',
+    location: 'East Legon, Accra',
+    region: 'Greater Accra',
+    district: 'Accra Metropolitan',
+    area: '2.5 hectares',
+    area_sqm: 25000,
+    landUse: 'Residential',
+    land_use: 'Residential',
+    status: 'Registered',
+    owner: 'Kofi Mensah',
+    owner_id: 'f5dd19cf-14c0-4a84-9646-f92d70fc8561',
+    registrationDate: '2024-01-15',
+    registration_date: '2024-01-15',
+    lastUpdated: '2024-11-10',
+    last_updated: '2024-11-10',
+    coordinates: [5.6400, -0.1500],
+    boundary_coordinates: [[5.6400, -0.1500], [5.6410, -0.1500], [5.6410, -0.1490], [5.6400, -0.1490]],
+    valuation: 95000,
+    title_number: 'GA/2024/001/TL'
+  },
+  {
+    id: 'GH-ACC-12346',
+    parcel_number: 'GH-ACC-12346',
+    location: 'Cantonments, Accra',
+    region: 'Greater Accra',
+    district: 'Accra Metropolitan',
+    area: '1.8 hectares',
+    area_sqm: 18000,
+    landUse: 'Commercial',
+    land_use: 'Commercial',
+    status: 'Pending',
+    owner: 'Ama Adjei',
+    owner_id: '430ab24f-6fba-449a-84b7-885eadefc674',
+    registrationDate: '2024-02-20',
+    registration_date: '2024-02-20',
+    lastUpdated: '2024-11-12',
+    last_updated: '2024-11-12',
+    coordinates: [5.5800, -0.1900],
+    boundary_coordinates: [[5.5800, -0.1900], [5.5810, -0.1900], [5.5810, -0.1890], [5.5800, -0.1890]],
+    valuation: 120000,
+    title_number: null
+  },
+  {
+    id: 'GH-ASH-45678',
+    parcel_number: 'GH-ASH-45678',
+    location: 'Kumasi Central',
+    region: 'Ashanti',
+    district: 'Kumasi Metropolitan',
+    area: '3.2 hectares',
+    area_sqm: 32000,
+    landUse: 'Agricultural',
+    land_use: 'Agricultural',
+    status: 'Registered',
+    owner: 'Kwame Nkrumah',
+    owner_id: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
+    registrationDate: '2023-11-05',
+    registration_date: '2023-11-05',
+    lastUpdated: '2024-11-01',
+    last_updated: '2024-11-01',
+    coordinates: [6.6885, -1.6244],
+    boundary_coordinates: [[6.6885, -1.6244], [6.6895, -1.6244], [6.6895, -1.6234], [6.6885, -1.6234]],
+    valuation: 75000,
+    title_number: 'AS/2023/045/TL'
+  },
+  {
+    id: 'GH-WR-78910',
+    parcel_number: 'GH-WR-78910',
+    location: 'Takoradi',
+    region: 'Western',
+    district: 'Sekondi-Takoradi',
+    area: '1.5 hectares',
+    area_sqm: 15000,
+    landUse: 'Industrial',
+    land_use: 'Industrial',
+    status: 'Verified',
+    owner: 'Abena Osei',
+    owner_id: '8c9f2d4e-1a3b-4c5d-6e7f-8g9h0i1j2k3l',
+    registrationDate: '2024-03-10',
+    registration_date: '2024-03-10',
+    lastUpdated: '2024-11-08',
+    last_updated: '2024-11-08',
+    coordinates: [4.8965, -1.7537],
+    boundary_coordinates: [[4.8965, -1.7537], [4.8975, -1.7537], [4.8975, -1.7527], [4.8965, -1.7527]],
+    valuation: 180000,
+    title_number: 'WR/2024/078/TL'
+  },
+  {
+    id: 'GH-NR-11213',
+    parcel_number: 'GH-NR-11213',
+    location: 'Tamale',
+    region: 'Northern',
+    district: 'Tamale Metropolitan',
+    area: '5.0 hectares',
+    area_sqm: 50000,
+    landUse: 'Residential',
+    land_use: 'Residential',
+    status: 'Processing',
+    owner: 'Yaw Mensah',
+    owner_id: 'b1c2d3e4-f5g6-7h8i-9j0k-l1m2n3o4p5q6',
+    registrationDate: '2024-10-01',
+    registration_date: '2024-10-01',
+    lastUpdated: '2024-11-13',
+    last_updated: '2024-11-13',
+    coordinates: [9.4008, -0.8393],
+    boundary_coordinates: [[9.4008, -0.8393], [9.4018, -0.8393], [9.4018, -0.8383], [9.4008, -0.8383]],
+    valuation: 85000,
+    title_number: null
+  }
+];
+
+const MOCK_TITLES = [
+  {
+    id: 'TL-2024-001',
+    parcelId: 'GH-ACC-12345',
+    parcel_id: 'GH-ACC-12345',
+    titleNumber: 'GA/2024/001/TL',
+    title_number: 'GA/2024/001/TL',
+    owner: 'Kofi Mensah',
+    owner_id: 'f5dd19cf-14c0-4a84-9646-f92d70fc8561',
+    issueDate: '2024-01-20',
+    issue_date: '2024-01-20',
+    status: 'Active',
+    type: 'Freehold',
+    title_type: 'Freehold',
+    blockchainHash: '0x1a2b3c4d5e6f7g8h9i0j',
+    blockchain_hash: '0x1a2b3c4d5e6f7g8h9i0j',
+    location: 'East Legon, Accra',
+    area: '2.5 hectares',
+    certificate_url: '/certificates/TL-2024-001.pdf'
+  },
+  {
+    id: 'TL-2023-045',
+    parcelId: 'GH-ASH-45678',
+    parcel_id: 'GH-ASH-45678',
+    titleNumber: 'AS/2023/045/TL',
+    title_number: 'AS/2023/045/TL',
+    owner: 'Kwame Nkrumah',
+    owner_id: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
+    issueDate: '2023-11-15',
+    issue_date: '2023-11-15',
+    status: 'Active',
+    type: 'Leasehold',
+    title_type: 'Leasehold',
+    blockchainHash: '0x2b3c4d5e6f7g8h9i0j1k',
+    blockchain_hash: '0x2b3c4d5e6f7g8h9i0j1k',
+    location: 'Kumasi Central',
+    area: '3.2 hectares',
+    certificate_url: '/certificates/TL-2023-045.pdf',
+    lease_expiry: '2073-11-15'
+  },
+  {
+    id: 'TL-2024-078',
+    parcelId: 'GH-WR-78910',
+    parcel_id: 'GH-WR-78910',
+    titleNumber: 'WR/2024/078/TL',
+    title_number: 'WR/2024/078/TL',
+    owner: 'Abena Osei',
+    owner_id: '8c9f2d4e-1a3b-4c5d-6e7f-8g9h0i1j2k3l',
+    issueDate: '2024-03-25',
+    issue_date: '2024-03-25',
+    status: 'Active',
+    type: 'Freehold',
+    title_type: 'Freehold',
+    blockchainHash: '0x3c4d5e6f7g8h9i0j1k2l',
+    blockchain_hash: '0x3c4d5e6f7g8h9i0j1k2l',
+    location: 'Takoradi',
+    area: '1.5 hectares',
+    certificate_url: '/certificates/TL-2024-078.pdf'
+  }
+];
+
+const MOCK_APPLICATIONS = [
+  {
+    id: 'APP-2024-001',
+    type: 'Land Registration',
+    parcelId: 'GH-ACC-12345',
+    applicant: 'Kofi Mensah',
+    submittedDate: '2024-01-10',
+    status: 'Approved',
+    progress: 100,
+    currentStage: 'Completed'
+  }
+];
+
+const MOCK_MORTGAGES = [
+  {
+    id: 'MTG-2024-001',
+    parcel_id: 'GH-ACC-12345',
+    titleId: 'TL-2024-001',
+    lender: 'Ghana Commercial Bank',
+    lender_name: 'Ghana Commercial Bank',
+    borrower_name: 'Kofi Mensah',
+    amount: 'GHS 250,000',
+    loan_amount: 250000,
+    startDate: '2024-03-01',
+    start_date: '2024-03-01',
+    endDate: '2044-03-01',
+    end_date: '2044-03-01',
+    status: 'active',
+    interestRate: '12.5%',
+    interest_rate: 12.5,
+    duration_months: 240,
+    monthly_payment: 2750,
+    outstanding_balance: 245000
+  }
+];
+
+const MOCK_DOCUMENTS = [
+  {
+    id: 'DOC-001',
+    name: 'Land Certificate - GH-ACC-12345.pdf',
+    type: 'Land Certificate',
+    uploadDate: '2024-01-20',
+    size: '2.4 MB',
+    status: 'Verified',
+    qrCode: 'QR-CERT-12345'
+  },
+  {
+    id: 'DOC-002',
+    name: 'Survey Report - GH-ACC-12345.pdf',
+    type: 'Survey Report',
+    uploadDate: '2024-01-18',
+    size: '5.1 MB',
+    status: 'Verified',
+    qrCode: 'QR-SURV-12345'
+  }
+];
+
+const MOCK_PAYMENTS = [
+  {
+    id: 'PAY-2024-001',
+    date: '2024-01-15',
+    amount: 'GHS 500',
+    method: 'Mobile Money (MTN)',
+    purpose: 'Land Registration Fee',
+    status: 'Completed',
+    reference: 'MTN-20240115-001'
+  },
+  {
+    id: 'PAY-2024-002',
+    date: '2024-01-20',
+    amount: 'GHS 150',
+    method: 'Card (Visa)',
+    purpose: 'Title Certificate Fee',
+    status: 'Completed',
+    reference: 'VISA-20240120-002'
+  }
+];
+
+const MOCK_BLOCKCHAIN = [
+  {
+    id: 'BLK-001',
+    action: 'Land Registration',
+    parcelId: 'GH-ACC-12345',
+    timestamp: '2024-01-15T14:30:00Z',
+    hash: '0x1a2b3c4d5e6f7g8h9i0j',
+    previousHash: '0x0a1b2c3d4e5f6g7h8i9j',
+    blockNumber: 12345
+  },
+  {
+    id: 'BLK-002',
+    action: 'Title Issuance',
+    parcelId: 'GH-ACC-12345',
+    timestamp: '2024-01-20T10:15:00Z',
+    hash: '0x2b3c4d5e6f7g8h9i0j1k',
+    previousHash: '0x1a2b3c4d5e6f7g8h9i0j',
+    blockNumber: 12346
+  }
+];
+
+const MOCK_INTEGRATIONS = [
+  {
+    id: 'INT-001',
+    name: 'GELIS',
+    description: 'Ghana Enterprise Land Information System',
+    status: 'Active',
+    lastSync: '2024-11-14T12:00:00Z',
+    syncFrequency: 'Real-time'
+  },
+  {
+    id: 'INT-002',
+    name: 'OASL',
+    description: 'Office of the Administrator of Stool Lands',
+    status: 'Active',
+    lastSync: '2024-11-14T11:45:00Z',
+    syncFrequency: 'Hourly'
+  },
+  {
+    id: 'INT-003',
+    name: 'GRA',
+    description: 'Ghana Revenue Authority',
+    status: 'Active',
+    lastSync: '2024-11-14T12:30:00Z',
+    syncFrequency: 'Daily'
+  }
+];
+
+const MOCK_DASHBOARD_STATS = {
+  totalParcels: 2,
+  activeTitles: 1,
+  pendingApplications: 0,
+  completedPayments: 2
+};
+
+const MOCK_SURVEYS = [
+  {
+    id: 'SRV-2024-001',
+    parcelId: 'GH-ACC-12345',
+    surveyor: 'Ama Adjei',
+    date: '2024-01-12',
+    status: 'Approved',
+    accuracy: '98.5%'
+  }
+];
+
+const MOCK_AUDIT_LOGS = [
+  {
+    id: 'AUD-001',
+    timestamp: '2024-11-14T14:30:00Z',
+    user: 'Kofi Mensah',
+    action: 'Viewed Parcel Details',
+    resource: 'GH-ACC-12345',
+    ipAddress: '192.168.1.100',
+    status: 'Success'
+  },
+  {
+    id: 'AUD-002',
+    timestamp: '2024-11-14T14:25:00Z',
+    user: 'Abena Osei',
+    action: 'Updated Application Status',
+    resource: 'APP-2024-001',
+    ipAddress: '192.168.1.101',
+    status: 'Success'
+  }
+];
+
+// Mock API class
+class MockAPI {
+  async get(url) {
+    await delay();
+    
+    if (url.includes('/parcels')) {
+      return { data: { success: true, data: MOCK_PARCELS } };
+    }
+    if (url.includes('/titles')) {
+      return { data: { success: true, data: MOCK_TITLES } };
+    }
+    if (url.includes('/applications')) {
+      return { data: { success: true, data: MOCK_APPLICATIONS } };
+    }
+    if (url.includes('/mortgages')) {
+      return { data: { success: true, data: MOCK_MORTGAGES } };
+    }
+    if (url.includes('/documents')) {
+      return { data: { success: true, data: MOCK_DOCUMENTS } };
+    }
+    if (url.includes('/payments')) {
+      return { data: { success: true, data: MOCK_PAYMENTS } };
+    }
+    if (url.includes('/blockchain')) {
+      return { data: { success: true, data: MOCK_BLOCKCHAIN } };
+    }
+    if (url.includes('/integrations')) {
+      return { data: { success: true, data: MOCK_INTEGRATIONS } };
+    }
+    if (url.includes('/dashboard/stats')) {
+      return { data: { success: true, data: MOCK_DASHBOARD_STATS } };
+    }
+    if (url.includes('/surveys')) {
+      return { data: { success: true, data: MOCK_SURVEYS } };
+    }
+    if (url.includes('/audit')) {
+      return { data: { success: true, data: MOCK_AUDIT_LOGS } };
+    }
+    if (url.includes('/notifications')) {
+      return { data: { success: true, data: [] } };
+    }
+    
+    return { data: { success: true, data: [] } };
+  }
+
+  async post(url, data) {
+    await delay();
+    return { data: { success: true, message: 'Operation successful', data: {} } };
+  }
+
+  async put(url, data) {
+    await delay();
+    return { data: { success: true, message: 'Updated successfully', data: {} } };
+  }
+
+  async delete(url) {
+    await delay();
+    return { data: { success: true, message: 'Deleted successfully' } };
+  }
+}
+
+const api = new MockAPI();
+
+// No interceptors needed for mock API
+api.interceptors = {
+  request: { use: () => {} },
+  response: { use: () => {} }
+};
+
+export default api;
