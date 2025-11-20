@@ -7,7 +7,9 @@ import {
 } from '@mui/material';
 import {
   Save, Send, ArrowBack, Map as MapIcon, Upload, CloudUpload, CheckCircle, Info,
-  GpsFixed, GpsNotFixed, Satellite, Delete, MyLocation, RadioButtonChecked, PlayArrow, Stop, Add
+  GpsFixed, GpsNotFixed, Satellite, Delete, MyLocation, RadioButtonChecked, PlayArrow, Stop, Add,
+  CloudOff, CloudDone, CameraAlt, PictureAsPdf, Code, Warning, CheckCircleOutline,
+  Visibility, Schedule, Assignment
 } from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, useMapEvents, Polygon } from 'react-leaflet';
 import api from '../services/api';
@@ -102,6 +104,14 @@ export default function SubmitSurveyPage() {
     owner_id: ''
   });
 
+  // New mockup features state
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingSync, setPendingSync] = useState(0);
+  const [photos, setPhotos] = useState([]);
+  const [validationResults, setValidationResults] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [workflowDialogOpen, setWorkflowDialogOpen] = useState(false);
+
   useEffect(() => {
     api.get('/parcels').then(res => setParcels(res.data.data));
 
@@ -122,6 +132,126 @@ export default function SubmitSurveyPage() {
       return () => clearInterval(gpsInterval);
     }
   }, []);
+
+  // Online/Offline detection for offline mode mockup
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (pendingSync > 0) {
+        setAlert({ type: 'success', message: `Back online! Syncing ${pendingSync} pending items...` });
+        setTimeout(() => setPendingSync(0), 2000);
+      }
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setAlert({ type: 'warning', message: 'You are offline. Data will be saved locally and synced when back online.' });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [pendingSync]);
+
+  // Validate boundary polygon
+  const validateBoundary = () => {
+    const points = surveyData.boundary_points;
+    const results = {
+      closure: false,
+      selfIntersection: true,
+      minimumPoints: points.length >= 3,
+      areaCalculated: null,
+      perimeterCalculated: null
+    };
+
+    if (points.length >= 3) {
+      // Check closure (first and last point proximity)
+      const first = points[0];
+      const last = points[points.length - 1];
+      const distance = Math.sqrt(
+        Math.pow(first.lat - last.lat, 2) + Math.pow(first.lng - last.lng, 2)
+      );
+      results.closure = distance < 0.0001; // ~10m threshold
+
+      // Mock area calculation (in production would use proper geodesic calculation)
+      results.areaCalculated = (Math.random() * 5 + 0.5).toFixed(2);
+      results.perimeterCalculated = (Math.random() * 500 + 100).toFixed(0);
+
+      // Mock self-intersection check (always passes for demo)
+      results.selfIntersection = false;
+    }
+
+    setValidationResults(results);
+    return results;
+  };
+
+  // Handle photo capture mockup
+  const handlePhotoCapture = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newPhoto = {
+          id: Date.now(),
+          name: file.name,
+          url: reader.result,
+          timestamp: new Date().toISOString(),
+          location: { lat: position[0], lng: position[1] },
+          type: file.name.includes('boundary') ? 'Boundary Marker' :
+                file.name.includes('monument') ? 'Survey Monument' : 'Site Photo'
+        };
+        setPhotos([...photos, newPhoto]);
+        setAlert({ type: 'success', message: `Photo "${file.name}" added to survey documentation` });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Export survey data
+  const handleExport = (format) => {
+    const exportData = {
+      parcel_id: parcels.find(p => p.id === surveyData.parcel_id)?.parcel_id,
+      survey_date: surveyData.survey_date,
+      surveyor: 'Current User',
+      instrument: surveyData.instrument_type,
+      accuracy: surveyData.accuracy_score,
+      center: { lat: position[0], lng: position[1] },
+      boundary_points: surveyData.boundary_points,
+      photos: photos.length,
+      notes: surveyData.notes
+    };
+
+    if (format === 'geojson') {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          properties: exportData,
+          geometry: {
+            type: 'Polygon',
+            coordinates: [surveyData.boundary_points.map(p => [p.lng, p.lat])]
+          }
+        }]
+      };
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `survey_${exportData.parcel_id}_${Date.now()}.geojson`;
+      a.click();
+      setAlert({ type: 'success', message: 'Survey exported as GeoJSON' });
+    } else if (format === 'pdf') {
+      // Mock PDF export
+      setAlert({ type: 'info', message: 'PDF report generation started. Download will begin shortly...' });
+      setTimeout(() => {
+        setAlert({ type: 'success', message: 'PDF report generated successfully (mock)' });
+      }, 1500);
+    }
+    setExportDialogOpen(false);
+  };
 
   const steps = ['Select Parcel', 'Record Location', 'Survey Details', 'Review & Submit'];
 
@@ -455,9 +585,17 @@ export default function SubmitSurveyPage() {
         <Button startIcon={<ArrowBack />} onClick={() => navigate('/surveyor')} sx={{ mr: 2 }}>
           Back to Dashboard
         </Button>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#006B3F' }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#006B3F', flex: 1 }}>
           Submit New Survey
         </Typography>
+        {/* Offline Mode Indicator */}
+        <Chip
+          icon={isOnline ? <CloudDone /> : <CloudOff />}
+          label={isOnline ? (pendingSync > 0 ? `Syncing ${pendingSync}...` : 'Online') : 'Offline Mode'}
+          color={isOnline ? 'success' : 'warning'}
+          variant={isOnline ? 'outlined' : 'filled'}
+          sx={{ ml: 2 }}
+        />
       </Box>
 
       {alert && (
@@ -497,13 +635,14 @@ export default function SubmitSurveyPage() {
               onChange={(event, newValue) => {
                 setSurveyData({ ...surveyData, parcel_id: newValue ? newValue.id : '' });
               }}
-              getOptionLabel={(option) => `${option.parcel_id} - ${option.location} (${option.area} ha)`}
+              getOptionLabel={(option) => `${option.parcel_id || 'Unknown'} - ${option.location || 'Unknown'} (${option.area || 0} ha)`}
               filterOptions={(options, { inputValue }) => {
+                const searchTerm = inputValue.toLowerCase();
                 const filtered = options.filter(option =>
-                  option.parcel_id.toLowerCase().includes(inputValue.toLowerCase()) ||
-                  option.location.toLowerCase().includes(inputValue.toLowerCase()) ||
-                  option.region?.toLowerCase().includes(inputValue.toLowerCase()) ||
-                  option.district?.toLowerCase().includes(inputValue.toLowerCase())
+                  (option.parcel_id || '').toLowerCase().includes(searchTerm) ||
+                  (option.location || '').toLowerCase().includes(searchTerm) ||
+                  (option.region || '').toLowerCase().includes(searchTerm) ||
+                  (option.district || '').toLowerCase().includes(searchTerm)
                 );
                 return filtered;
               }}
@@ -870,6 +1009,121 @@ export default function SubmitSurveyPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Boundary Validation Section */}
+            {surveyData.boundary_points.length >= 3 && (
+              <Card sx={{ mt: 2, border: '1px solid #e0e0e0' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Boundary Validation
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={validateBoundary}
+                      startIcon={<CheckCircleOutline />}
+                    >
+                      Validate
+                    </Button>
+                  </Box>
+                  {validationResults && (
+                    <Grid container spacing={1}>
+                      <Grid item xs={6}>
+                        <Chip
+                          icon={validationResults.minimumPoints ? <CheckCircle /> : <Warning />}
+                          label="Min 3 Points"
+                          size="small"
+                          color={validationResults.minimumPoints ? 'success' : 'error'}
+                          sx={{ width: '100%' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip
+                          icon={validationResults.closure ? <CheckCircle /> : <Warning />}
+                          label="Polygon Closed"
+                          size="small"
+                          color={validationResults.closure ? 'success' : 'warning'}
+                          sx={{ width: '100%' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip
+                          icon={!validationResults.selfIntersection ? <CheckCircle /> : <Warning />}
+                          label="No Self-Intersection"
+                          size="small"
+                          color={!validationResults.selfIntersection ? 'success' : 'error'}
+                          sx={{ width: '100%' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip
+                          label={`Area: ${validationResults.areaCalculated} ha`}
+                          size="small"
+                          color="primary"
+                          sx={{ width: '100%' }}
+                        />
+                      </Grid>
+                    </Grid>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Photo Capture Section */}
+            <Card sx={{ mt: 2, border: '1px solid #e0e0e0' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CameraAlt sx={{ color: '#006B3F' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Photo Documentation
+                    </Typography>
+                  </Box>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="photo-capture"
+                    type="file"
+                    onChange={handlePhotoCapture}
+                    capture="environment"
+                  />
+                  <label htmlFor="photo-capture">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      size="small"
+                      startIcon={<CameraAlt />}
+                    >
+                      Add Photo
+                    </Button>
+                  </label>
+                </Box>
+                {photos.length > 0 ? (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {photos.map((photo) => (
+                      <Chip
+                        key={photo.id}
+                        label={photo.type}
+                        size="small"
+                        onDelete={() => setPhotos(photos.filter(p => p.id !== photo.id))}
+                        avatar={
+                          <Box
+                            component="img"
+                            src={photo.url}
+                            sx={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
+                          />
+                        }
+                      />
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No photos added. Capture boundary markers, monuments, or site conditions.
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
           </Box>
         )}
 
@@ -990,6 +1244,36 @@ export default function SubmitSurveyPage() {
                 <Typography variant="body1">{surveyData.notes || 'No notes added'}</Typography>
               </Grid>
             </Grid>
+
+            {/* Photos Summary */}
+            {photos.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="caption" color="text.secondary">Photo Documentation</Typography>
+                <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                  {photos.map((photo) => (
+                    <Chip key={photo.id} label={photo.type} size="small" />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+
+            {/* Export & Workflow Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdf />}
+                onClick={() => setExportDialogOpen(true)}
+              >
+                Export Data
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<Assignment />}
+                onClick={() => setWorkflowDialogOpen(true)}
+              >
+                View Approval Workflow
+              </Button>
+            </Box>
 
             <Alert severity="info" sx={{ mt: 3 }}>
               Once submitted, this survey will be sent for review by a Lands Officer.
@@ -1152,6 +1436,142 @@ export default function SubmitSurveyPage() {
           >
             {creatingParcel ? 'Creating...' : 'Create & Select Parcel'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Export Survey Data</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Choose an export format for your survey data:
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Card
+                sx={{
+                  p: 2,
+                  cursor: 'pointer',
+                  border: '2px solid transparent',
+                  '&:hover': { border: '2px solid #006B3F', bgcolor: '#f5f5f5' }
+                }}
+                onClick={() => handleExport('geojson')}
+              >
+                <Box sx={{ textAlign: 'center' }}>
+                  <Code sx={{ fontSize: 40, color: '#006B3F', mb: 1 }} />
+                  <Typography variant="subtitle1" fontWeight="bold">GeoJSON</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    For GIS software & mapping
+                  </Typography>
+                </Box>
+              </Card>
+            </Grid>
+            <Grid item xs={6}>
+              <Card
+                sx={{
+                  p: 2,
+                  cursor: 'pointer',
+                  border: '2px solid transparent',
+                  '&:hover': { border: '2px solid #006B3F', bgcolor: '#f5f5f5' }
+                }}
+                onClick={() => handleExport('pdf')}
+              >
+                <Box sx={{ textAlign: 'center' }}>
+                  <PictureAsPdf sx={{ fontSize: 40, color: '#CE1126', mb: 1 }} />
+                  <Typography variant="subtitle1" fontWeight="bold">PDF Report</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Official survey report
+                  </Typography>
+                </Box>
+              </Card>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Approval Workflow Dialog */}
+      <Dialog open={workflowDialogOpen} onClose={() => setWorkflowDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Survey Approval Workflow</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            {/* Step 1 */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%', bgcolor: '#006B3F',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2, flexShrink: 0
+              }}>
+                <CheckCircle sx={{ color: 'white', fontSize: 20 }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold">1. Survey Submission</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Surveyor submits survey with GPS data, boundary points, and documentation
+                </Typography>
+                <Chip label="Current Step" size="small" color="primary" sx={{ mt: 1 }} />
+              </Box>
+            </Box>
+
+            {/* Step 2 */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%', bgcolor: '#FCD116',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2, flexShrink: 0
+              }}>
+                <Visibility sx={{ color: '#333', fontSize: 20 }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold">2. Technical Review</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Lands Officer reviews survey accuracy, boundary validation, and documentation
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Est. 2-3 business days</Typography>
+              </Box>
+            </Box>
+
+            {/* Step 3 */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%', bgcolor: '#e0e0e0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2, flexShrink: 0
+              }}>
+                <Schedule sx={{ color: '#666', fontSize: 20 }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold">3. Field Verification</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Physical site inspection if required for complex or disputed boundaries
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Est. 5-7 business days (if needed)</Typography>
+              </Box>
+            </Box>
+
+            {/* Step 4 */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+              <Box sx={{
+                width: 40, height: 40, borderRadius: '50%', bgcolor: '#e0e0e0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 2, flexShrink: 0
+              }}>
+                <CheckCircleOutline sx={{ color: '#666', fontSize: 20 }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold">4. Final Approval</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Survey approved and linked to land title. Owner and surveyor notified.
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Est. 1-2 business days</Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Total estimated time: 3-12 business days depending on complexity
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWorkflowDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Container>

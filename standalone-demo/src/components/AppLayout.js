@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -7,50 +7,249 @@ import {
   Typography,
   Box,
   IconButton,
-  Container,
   Menu,
   MenuItem,
   Avatar,
   Divider,
-  Tabs,
-  Tab,
-  Button
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Collapse,
+  Badge,
+  Tooltip,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import {
+  Menu as MenuIcon,
+  Settings,
+  Help,
+  Notifications,
+  Person,
+  ExpandLess,
+  ExpandMore,
   Home,
-  Chat,
-  Close,
-  Send
+  Receipt,
+  Search
 } from '@mui/icons-material';
 
-const routeNames = {
-  '/citizen': 'Citizen Dashboard',
-  '/surveyor': 'Surveyor Dashboard',
-  '/officer': 'Officer Dashboard',
-  '/admin': 'Admin Dashboard',
-  '/parcels': 'Parcels',
-  '/titles': 'Land Titles',
-  '/applications': 'Applications',
-  '/payments': 'Payments',
-  '/blockchain': 'Blockchain',
-  '/integrations': 'Integrations',
-  '/submit-survey': 'Submit Survey',
-  '/my-surveys': 'My Surveys',
-  '/mortgages': 'Mortgages',
-  '/documents': 'Documents',
-  '/help': 'Help & FAQ',
-  '/audit': 'Audit Logs',
-  '/support': 'Support',
-  '/settings': 'Settings',
-  '/spatial': 'Spatial Dashboard',
-  '/gis-demo': 'GIS Platform Demo'
-};
+const DRAWER_WIDTH = 260;
 
-const roleColors = {
-  citizen: '#006B3F',      // Ghana Green
-  surveyor: '#008751',     // Lighter Ghana Green
-  lands_officer: '#C9A200', // Darker Gold
-  admin: '#CE1126'         // Ghana Red
+// Navigation structure with grouped menus
+const getNavigationConfig = (role) => {
+  const citizenNav = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <Home fontSize="small" />,
+      path: '/citizen',
+    },
+    {
+      id: 'search',
+      label: 'Land Search',
+      icon: <Search fontSize="small" />,
+      path: '/land-search',
+    },
+    {
+      id: 'properties',
+      label: 'Properties',
+      children: [
+        { label: 'My Properties', path: '/my-properties' },
+        { label: 'Land Titles', path: '/titles' },
+        { label: 'Parcels', path: '/parcels' },
+      ],
+    },
+    {
+      id: 'payments',
+      label: 'Payments & Billing',
+      children: [
+        { label: 'Pay Online', path: '/pay-online' },
+        { label: 'Billing History', path: '/billing-history' },
+        { label: 'Payment Assistance', path: '/payment-assistance' },
+      ],
+    },
+    {
+      id: 'services',
+      label: 'Services',
+      children: [
+        { label: 'Applications', path: '/applications' },
+        { label: 'Documents', path: '/documents' },
+        { label: 'Mortgages', path: '/mortgages' },
+      ],
+    },
+    {
+      id: 'account',
+      label: 'Account',
+      path: '/my-account',
+    },
+  ];
+
+  const surveyorNav = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <Home fontSize="small" />,
+      path: '/surveyor',
+    },
+    {
+      id: 'surveys',
+      label: 'Surveys',
+      children: [
+        { label: 'Submit Survey', path: '/submit-survey' },
+        { label: 'My Surveys', path: '/my-surveys' },
+      ],
+    },
+    {
+      id: 'spatial',
+      label: 'Spatial Data',
+      children: [
+        { label: 'Parcels', path: '/parcels' },
+        { label: 'Spatial Dashboard', path: '/spatial' },
+        { label: 'GIS Platform', path: '/gis-demo' },
+      ],
+    },
+    {
+      id: 'admin',
+      label: 'Administration',
+      children: [
+        { label: 'Documents', path: '/documents' },
+        { label: 'Payments', path: '/payments' },
+        { label: 'Audit Log', path: '/audit' },
+      ],
+    },
+  ];
+
+  const officerNav = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <Home fontSize="small" />,
+      path: '/officer',
+    },
+    {
+      id: 'processing',
+      label: 'Processing',
+      children: [
+        { label: 'Applications', path: '/applications' },
+        { label: 'Titles', path: '/titles' },
+        { label: 'Parcels', path: '/parcels' },
+      ],
+    },
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      children: [
+        { label: 'Title Transfer', path: '/title-transfer' },
+        { label: 'Subdivision', path: '/subdivision' },
+        { label: 'Leases', path: '/leases' },
+        { label: 'Stamp Duty Calculator', path: '/stamp-duty-calculator' },
+      ],
+    },
+    {
+      id: 'special',
+      label: 'Special Cases',
+      children: [
+        { label: 'Disputes', path: '/disputes' },
+        { label: 'Customary Land', path: '/customary-land' },
+        { label: 'Succession', path: '/succession' },
+      ],
+    },
+    {
+      id: 'ffp',
+      label: 'Fit-for-Purpose',
+      children: [
+        { label: 'Tiered Registration', path: '/tiered-registration' },
+        { label: 'Community Mapping', path: '/community-mapping' },
+        { label: 'Para-Surveyors', path: '/para-surveyors' },
+        { label: 'Women\'s Rights', path: '/women-inclusion' },
+      ],
+    },
+    {
+      id: 'valuation',
+      label: 'Valuation',
+      children: [
+        { label: 'Property Valuation', path: '/valuation' },
+        { label: 'Payments', path: '/payments' },
+        { label: 'Analytics', path: '/analytics' },
+      ],
+    },
+  ];
+
+  const adminNav = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <Home fontSize="small" />,
+      path: '/admin',
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      children: [
+        { label: 'Dashboard', path: '/analytics' },
+        { label: 'Revenue Reports', path: '/revenue-reporting' },
+      ],
+    },
+    {
+      id: 'registry',
+      label: 'Land Registry',
+      children: [
+        { label: 'Parcels', path: '/parcels' },
+        { label: 'Titles', path: '/titles' },
+        { label: 'Applications', path: '/applications' },
+      ],
+    },
+    {
+      id: 'financial',
+      label: 'Financial',
+      children: [
+        { label: 'Payments', path: '/payments' },
+        { label: 'Valuation', path: '/valuation' },
+        { label: 'Mortgages', path: '/mortgages' },
+        { label: 'Stamp Duty Calculator', path: '/stamp-duty-calculator' },
+      ],
+    },
+    {
+      id: 'operations',
+      label: 'Operations',
+      children: [
+        { label: 'Disputes', path: '/disputes' },
+        { label: 'Leases', path: '/leases' },
+        { label: 'Notifications', path: '/notifications' },
+      ],
+    },
+    {
+      id: 'ffp',
+      label: 'Fit-for-Purpose',
+      children: [
+        { label: 'Tiered Registration', path: '/tiered-registration' },
+        { label: 'Community Mapping', path: '/community-mapping' },
+        { label: 'Para-Surveyors', path: '/para-surveyors' },
+        { label: 'Women\'s Rights', path: '/women-inclusion' },
+      ],
+    },
+    {
+      id: 'system',
+      label: 'System',
+      children: [
+        { label: 'Blockchain', path: '/blockchain' },
+        { label: 'Integrations', path: '/integrations' },
+        { label: 'Audit Log', path: '/audit' },
+        { label: 'Surveyor Accreditation', path: '/surveyor-accreditation' },
+      ],
+    },
+  ];
+
+  switch (role) {
+    case 'citizen': return citizenNav;
+    case 'surveyor': return surveyorNav;
+    case 'lands_officer': return officerNav;
+    case 'admin': return adminNav;
+    default: return [];
+  }
 };
 
 const roleLabels = {
@@ -64,9 +263,32 @@ export default function AppLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [chatOpen, setChatOpen] = React.useState(false);
-  const [chatMessage, setChatMessage] = React.useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState({});
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const navigationConfig = getNavigationConfig(user?.role);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleExpandClick = (id) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleNavClick = (path) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
 
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -81,462 +303,421 @@ export default function AppLayout({ children }) {
     logout();
   };
 
-  const handleTabClick = (tab) => {
-    if (tab.onClick) {
-      tab.onClick();
-    } else {
-      navigate(tab.path);
-    }
+  const isActivePath = (path) => {
+    return location.pathname === path;
   };
 
-  // Role-specific navigation tabs with shortened labels
-  const getNavigationTabs = () => {
-    const role = user?.role;
-
-    const citizenTabs = [
-      { label: 'Home', path: getHomePath(), icon: true },
-      { label: 'Parcels', path: '/parcels' },
-      { label: 'Titles', path: '/titles' },
-      { label: 'Applications', path: '/applications' },
-      { label: 'Mortgages', path: '/mortgages' },
-      { label: 'Documents', path: '/documents' },
-      { label: 'Payments', path: '/payments' },
-      { label: 'Blockchain', path: '/blockchain' },
-      { label: 'Audit', path: '/audit' },
-    ];
-
-    const surveyorTabs = [
-      { label: 'Home', path: getHomePath(), icon: true },
-      { label: 'Submit', path: '/submit-survey' },
-      { label: 'Surveys', path: '/my-surveys' },
-      { label: 'Parcels', path: '/parcels' },
-      { label: 'Documents', path: '/documents' },
-      { label: 'Audit', path: '/audit' },
-    ];
-
-    const officerTabs = [
-      { label: 'Home', path: getHomePath(), icon: true },
-      { label: 'Applications', path: '/applications' },
-      { label: 'Titles', path: '/titles' },
-      { label: 'Mortgages', path: '/mortgages' },
-      { label: 'Documents', path: '/documents' },
-      { label: 'Parcels', path: '/parcels' },
-      { label: 'GIS Demo', path: '/gis-demo' },
-      { label: 'Payments', path: '/payments' },
-      { label: 'Audit', path: '/audit' },
-    ];
-
-    const adminTabs = [
-      { label: 'Home', path: getHomePath(), icon: true },
-      { label: 'Parcels', path: '/parcels' },
-      { label: 'GIS Demo', path: '/gis-demo' },
-      { label: 'Titles', path: '/titles' },
-      { label: 'Applications', path: '/applications' },
-      { label: 'Mortgages', path: '/mortgages' },
-      { label: 'Documents', path: '/documents' },
-      { label: 'Payments', path: '/payments' },
-      { label: 'Blockchain', path: '/blockchain' },
-      { label: 'Integrations', path: '/integrations' },
-      { label: 'Audit', path: '/audit' },
-      { label: 'Users', path: '/users', onClick: () => {
-        alert('User Management\n\nTotal Users: 4\n\nKofi Mensah (citizen) - Active\nAma Adjei (surveyor) - Active\nAbena Osei (lands_officer) - Active\nKwame Nkrumah (admin) - Active\n\nIn the full application:\n- Create new users\n- Modify user roles\n- Suspend/activate accounts\n- View activity logs\n- Reset passwords');
-      }},
-    ];
-
-    if (role === 'citizen') return citizenTabs;
-    if (role === 'surveyor') return surveyorTabs;
-    if (role === 'lands_officer') return officerTabs;
-    if (role === 'admin') return adminTabs;
-    return [];
+  const isActiveGroup = (children) => {
+    return children?.some(child => location.pathname === child.path);
   };
 
-  const getHomePath = () => {
-    const roleMap = {
-      citizen: '/citizen',
-      surveyor: '/surveyor',
-      lands_officer: '/officer',
-      admin: '/admin'
-    };
-    return roleMap[user?.role] || '/login';
-  };
-
-  const roleColor = roleColors[user?.role] || '#006B3F';
-  const roleLabel = roleLabels[user?.role] || 'User';
-
-  // Sample chatbot conversations
-  const sampleChats = [
-    { user: 'Check my land title status', bot: 'Your land title LND-GH-AC-2024-001 is Active and verified on blockchain. Last updated: 2024-11-10' },
-    { user: 'Calculate stamp duty for GHS 100,000 property', bot: 'Stamp duty for GHS 100,000 property:\n• Stamp Duty (1%): GHS 1,000\n• Registration Fee: GHS 250\n• Processing Fee: GHS 100\nTotal: GHS 1,350' },
-    { user: 'How do I register a mortgage?', bot: 'To register a mortgage:\n1. Submit mortgage application\n2. Upload bank approval letter\n3. Pay registration fees (GHS 350)\n4. Biometric verification\n5. Smart contract execution on blockchain\nProcessing time: 3-5 business days' },
-    { user: 'Verify certificate by QR code', bot: 'Please scan or upload the QR code from your certificate. You can also enter the certificate number manually.' }
-  ];
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Top Navigation Bar - Scandinavian White Design */}
-      <AppBar position="sticky" color="default" elevation={0}>
-        <Toolbar sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-          {/* Logo and Title */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 0 }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                bgcolor: '#006B3F',
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                boxShadow: '0 2px 8px rgba(0,107,63,0.15)'
-              }}
-            >
-              🇬🇭
-            </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em', color: 'text.primary' }}>
-                Ghana Lands Commission
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', letterSpacing: '0.05em', fontWeight: 500 }}>
-                NATIONAL LAND ERP SYSTEM
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Spacer */}
-          <Box sx={{ flexGrow: 1 }} />
-
-          {/* User Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'right' }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'text.primary' }}>
-                {user?.full_name}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: roleColor,
-                  }}
-                />
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>
-                  {roleLabel}
-                </Typography>
-              </Box>
-            </Box>
-            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
-              <Avatar sx={{ width: 44, height: 44, bgcolor: roleColor, fontWeight: 600 }}>
-                {user?.full_name?.charAt(0) || 'U'}
-              </Avatar>
-            </IconButton>
-          </Box>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleUserMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            PaperProps={{
-              sx: { mt: 1, minWidth: 200 }
-            }}
-          >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {user?.full_name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Box>
-            <Divider />
-            <MenuItem onClick={() => { handleUserMenuClose(); navigate('/settings'); }}>
-              Settings
-            </MenuItem>
-            <MenuItem onClick={() => { handleUserMenuClose(); navigate('/help'); }}>
-              Help & FAQ
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-              Logout
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      {/* Navigation Tabs Bar - Minimal Scandinavian */}
-      <Box sx={{
-        bgcolor: 'background.paper',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}>
-        <Tabs
-          value={getNavigationTabs().findIndex(tab => tab.path === location.pathname)}
-          variant="fullWidth"
-          textColor="inherit"
-          TabIndicatorProps={{
-            style: { backgroundColor: '#006B3F', height: 3 }
-          }}
-          sx={{
-            minHeight: 48,
-            maxWidth: 'lg',
-            mx: 'auto',
-            px: 2,
-            '& .MuiTab-root': {
-              minHeight: 48,
-              minWidth: 0,
-              flex: 1,
-              px: 1,
-              color: 'text.secondary',
-              fontWeight: 600,
-              fontSize: '0.8125rem',
-              transition: 'all 0.2s',
-              '&:hover': {
-                color: '#006B3F',
-                backgroundColor: 'rgba(0,107,63,0.04)'
-              },
-              '&.Mui-selected': {
-                color: '#006B3F',
-              }
-            }
-          }}
-        >
-          {getNavigationTabs().map((tab, index) => (
-            <Tab
-              key={index}
-              icon={tab.icon ? <Home sx={{ fontSize: '1.1rem' }} /> : undefined}
-              iconPosition="start"
-              label={tab.icon ? undefined : tab.label}
-              onClick={() => handleTabClick(tab)}
-            />
-          ))}
-        </Tabs>
-      </Box>
-
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
-        {children}
-      </Box>
-
-      {/* ChatBOT Widget */}
-      {!chatOpen && (
-        <IconButton
-          onClick={() => setChatOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 60,
-            height: 60,
-            bgcolor: '#006B3F',
-            color: 'white',
-            boxShadow: '0 4px 12px rgba(0,107,63,0.3)',
-            '&:hover': {
-              bgcolor: '#008751',
-              transform: 'scale(1.05)',
-            },
-            transition: 'all 0.3s',
-            zIndex: 1000
-          }}
-        >
-          <Chat />
-        </IconButton>
-      )}
-
-      {/* ChatBOT Dialog */}
-      {chatOpen && (
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 380,
-            height: 520,
-            bgcolor: 'white',
-            borderRadius: 2,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 1000,
-            overflow: 'hidden'
-          }}
-        >
-          {/* Chat Header */}
+  // Sidebar content
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Logo */}
+      <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
-              bgcolor: '#006B3F',
-              color: 'white',
-              p: 2,
+              width: 32,
+              height: 32,
+              borderRadius: 1,
+              bgcolor: '#0D9488',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '0.875rem',
+              fontWeight: 600,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chat />
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  LC Assistant
-                </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                  AI-Powered Land Registry Help
-                </Typography>
-              </Box>
-            </Box>
-            <IconButton
-              size="small"
-              onClick={() => setChatOpen(false)}
-              sx={{ color: 'white' }}
-            >
-              <Close />
-            </IconButton>
+            LC
           </Box>
-
-          {/* Language Selector */}
-          <Box sx={{ px: 2, py: 1, bgcolor: '#F5F5F5', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
-              Language:
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+              Lands Commission
             </Typography>
-            {['English', 'Twi', 'Ga', 'Ewe'].map((lang) => (
-              <Button
-                key={lang}
-                size="small"
-                variant={lang === 'English' ? 'contained' : 'text'}
-                sx={{
-                  mr: 0.5,
-                  minWidth: 'auto',
-                  fontSize: '0.7rem',
-                  px: 1,
-                  py: 0.3,
-                  ...(lang === 'English' && {
-                    bgcolor: '#006B3F',
-                    '&:hover': { bgcolor: '#008751' }
-                  })
-                }}
-              >
-                {lang}
-              </Button>
-            ))}
-          </Box>
-
-          {/* Chat Messages */}
-          <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', bgcolor: '#FAFAFA' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2, textAlign: 'center' }}>
-              Try these sample questions:
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6875rem' }}>
+              Ghana
             </Typography>
-            {sampleChats.map((chat, idx) => (
-              <Box key={idx} sx={{ mb: 2 }}>
-                {/* User Message */}
-                <Box
-                  sx={{
-                    bgcolor: '#E3F2FD',
-                    p: 1.5,
-                    borderRadius: 2,
-                    mb: 1,
-                    maxWidth: '85%',
-                    ml: 'auto',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                    {chat.user}
-                  </Typography>
-                </Box>
-                {/* Bot Response */}
-                <Box
-                  sx={{
-                    bgcolor: 'white',
-                    p: 1.5,
-                    borderRadius: 2,
-                    maxWidth: '85%',
-                    border: '1px solid rgba(0,107,63,0.1)',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', whiteSpace: 'pre-line', color: 'text.primary' }}>
-                    {chat.bot}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-
-          {/* Chat Input */}
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: 'white',
-              borderTop: '1px solid rgba(0,0,0,0.08)',
-              display: 'flex',
-              gap: 1
-            }}
-          >
-            <Box
-              component="input"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Type your question... (Demo only)"
-              sx={{
-                flexGrow: 1,
-                border: '1px solid rgba(0,0,0,0.12)',
-                borderRadius: 1,
-                px: 1.5,
-                py: 1,
-                fontSize: '0.875rem',
-                outline: 'none',
-                '&:focus': {
-                  borderColor: '#006B3F'
-                }
-              }}
-            />
-            <IconButton
-              sx={{
-                bgcolor: '#006B3F',
-                color: 'white',
-                '&:hover': { bgcolor: '#008751' }
-              }}
-              onClick={() => {
-                alert('ChatBOT Demo: In production, this would send: "' + chatMessage + '" to the AI assistant');
-                setChatMessage('');
-              }}
-            >
-              <Send />
-            </IconButton>
           </Box>
         </Box>
-      )}
+      </Box>
 
-      {/* Footer - Minimal Scandinavian */}
+      {/* Navigation */}
+      <Box sx={{ flex: 1, overflowY: 'auto', py: 1 }}>
+        <List sx={{ px: 1 }}>
+          {navigationConfig.map((item) => (
+            <React.Fragment key={item.id}>
+              {item.children ? (
+                <>
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleExpandClick(item.id)}
+                      sx={{
+                        borderRadius: 1.5,
+                        py: 1,
+                        px: 1.5,
+                        minHeight: 40,
+                        bgcolor: isActiveGroup(item.children) ? 'rgba(13, 148, 136, 0.08)' : 'transparent',
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        },
+                      }}
+                    >
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{
+                          fontSize: '0.8125rem',
+                          fontWeight: isActiveGroup(item.children) ? 600 : 500,
+                          color: isActiveGroup(item.children) ? '#0D9488' : 'text.primary',
+                        }}
+                      />
+                      {expandedItems[item.id] || isActiveGroup(item.children) ? (
+                        <ExpandLess sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      ) : (
+                        <ExpandMore sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                  <Collapse in={expandedItems[item.id] || isActiveGroup(item.children)} timeout="auto">
+                    <List disablePadding sx={{ pl: 2 }}>
+                      {item.children.map((child) => (
+                        <ListItem key={child.path} disablePadding sx={{ mb: 0.25 }}>
+                          <ListItemButton
+                            onClick={() => handleNavClick(child.path)}
+                            sx={{
+                              borderRadius: 1.5,
+                              py: 0.75,
+                              px: 1.5,
+                              minHeight: 36,
+                              bgcolor: isActivePath(child.path) ? 'rgba(13, 148, 136, 0.08)' : 'transparent',
+                              '&:hover': {
+                                bgcolor: 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <ListItemText
+                              primary={child.label}
+                              primaryTypographyProps={{
+                                fontSize: '0.8125rem',
+                                fontWeight: isActivePath(child.path) ? 600 : 400,
+                                color: isActivePath(child.path) ? '#0D9488' : 'text.secondary',
+                              }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Collapse>
+                </>
+              ) : (
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    onClick={() => handleNavClick(item.path)}
+                    sx={{
+                      borderRadius: 1.5,
+                      py: 1,
+                      px: 1.5,
+                      minHeight: 40,
+                      bgcolor: isActivePath(item.path) ? 'rgba(13, 148, 136, 0.08)' : 'transparent',
+                      '&:hover': {
+                        bgcolor: 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    {item.icon && (
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: isActivePath(item.path) ? '#0D9488' : 'text.secondary'
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                    )}
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: '0.8125rem',
+                        fontWeight: isActivePath(item.path) ? 600 : 500,
+                        color: isActivePath(item.path) ? '#0D9488' : 'text.primary',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              )}
+            </React.Fragment>
+          ))}
+        </List>
+      </Box>
+
+      {/* Bottom section */}
+      <Box sx={{ borderTop: '1px solid', borderColor: 'divider', p: 1 }}>
+        <List sx={{ px: 0 }}>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => handleNavClick('/help')}
+              sx={{
+                borderRadius: 1.5,
+                py: 1,
+                px: 1.5,
+                minHeight: 40,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary' }}>
+                <Help fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Help & Support"
+                primaryTypographyProps={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => handleNavClick('/settings')}
+              sx={{
+                borderRadius: 1.5,
+                py: 1,
+                px: 1.5,
+                minHeight: 40,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary' }}>
+                <Settings fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Settings"
+                primaryTypographyProps={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Sidebar */}
       <Box
-        component="footer"
-        sx={{
-          py: 4,
-          px: 2,
-          mt: 'auto',
-          bgcolor: 'background.paper',
-          borderTop: '1px solid',
-          borderColor: 'divider',
-        }}
+        component="nav"
+        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
       >
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-                © 2025 Lands Commission of Ghana
+        {/* Mobile drawer */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: DRAWER_WIDTH,
+              bgcolor: 'background.paper',
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+
+        {/* Desktop drawer */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: DRAWER_WIDTH,
+              bgcolor: 'background.paper',
+            },
+          }}
+          open
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
+
+      {/* Main content area */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Top bar */}
+        <AppBar
+          position="sticky"
+          color="default"
+          elevation={0}
+          sx={{ bgcolor: 'background.paper' }}
+        >
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 2, sm: 3 } }}>
+            {/* Mobile menu button */}
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Search */}
+            <Box
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'center',
+                bgcolor: '#F1F5F9',
+                borderRadius: 1.5,
+                px: 1.5,
+                py: 0.75,
+                flex: 1,
+                maxWidth: 400,
+              }}
+            >
+              <Search sx={{ fontSize: 18, color: 'text.disabled', mr: 1 }} />
+              <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+                Search...
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Powered by Blockchain Technology • Version 1.0.0
+              <Typography
+                variant="caption"
+                sx={{
+                  ml: 'auto',
+                  bgcolor: 'white',
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 0.5,
+                  color: 'text.secondary',
+                  fontSize: '0.6875rem',
+                }}
+              >
+                /
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#CE1126' }} />
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#FCD116' }} />
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#006B3F' }} />
+
+            <Box sx={{ flex: 1 }} />
+
+            {/* Right side actions */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Notifications */}
+              <Tooltip title="Notifications">
+                <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                  <Badge badgeContent={3} color="error" variant="dot">
+                    <Notifications fontSize="small" />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+
+              {/* User menu */}
+              <Box
+                onClick={handleUserMenuOpen}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  cursor: 'pointer',
+                  ml: 1,
+                  p: 0.5,
+                  borderRadius: 1,
+                  '&:hover': { bgcolor: '#F1F5F9' },
+                }}
+              >
+                <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'right' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8125rem', lineHeight: 1.2 }}>
+                    {user?.full_name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6875rem' }}>
+                    {roleLabels[user?.role] || 'User'}
+                  </Typography>
+                </Box>
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: '#0D9488',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  {user?.full_name?.charAt(0) || 'U'}
+                </Avatar>
+              </Box>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleUserMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                  sx: { mt: 1, minWidth: 200 }
+                }}
+              >
+                <Box sx={{ px: 2, py: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {user?.full_name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {user?.email}
+                  </Typography>
+                </Box>
+                <Divider />
+                <MenuItem onClick={() => { handleUserMenuClose(); navigate('/my-account'); }}>
+                  <ListItemIcon><Person fontSize="small" /></ListItemIcon>
+                  My Account
+                </MenuItem>
+                <MenuItem onClick={() => { handleUserMenuClose(); navigate('/billing-history'); }}>
+                  <ListItemIcon><Receipt fontSize="small" /></ListItemIcon>
+                  Billing
+                </MenuItem>
+                <MenuItem onClick={() => { handleUserMenuClose(); navigate('/settings'); }}>
+                  <ListItemIcon><Settings fontSize="small" /></ListItemIcon>
+                  Settings
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                  Logout
+                </MenuItem>
+              </Menu>
             </Box>
+          </Toolbar>
+        </AppBar>
+
+        {/* Page content */}
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            p: { xs: 2, sm: 3 },
+            overflow: 'auto',
+          }}
+        >
+          {children}
+        </Box>
+
+        {/* Footer */}
+        <Box
+          component="footer"
+          sx={{
+            py: 2,
+            px: 3,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              2025 Lands Commission of Ghana
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              v1.0.0
+            </Typography>
           </Box>
-        </Container>
+        </Box>
       </Box>
     </Box>
   );

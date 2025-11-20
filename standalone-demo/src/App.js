@@ -30,6 +30,30 @@ import SupportPage from './pages/SupportPage';
 import SettingsPage from './pages/SettingsPage';
 import SpatialDashboardPage from './pages/SpatialDashboardPage';
 import GISDemoPage from './pages/GISDemoPage';
+import TitleTransferPage from './pages/TitleTransferPage';
+import DisputeResolutionPage from './pages/DisputeResolutionPage';
+import CustomaryLandPage from './pages/CustomaryLandPage';
+import EncumbrancePage from './pages/EncumbrancePage';
+import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
+import ValuationPage from './pages/ValuationPage';
+import SubdivisionPage from './pages/SubdivisionPage';
+import SuccessionPage from './pages/SuccessionPage';
+import LeaseManagementPage from './pages/LeaseManagementPage';
+import NotificationCenterPage from './pages/NotificationCenterPage';
+import PublicPortalPage from './pages/PublicPortalPage';
+import OnlinePaymentPortalPage from './pages/OnlinePaymentPortalPage';
+import MyPropertiesPage from './pages/MyPropertiesPage';
+import BillingHistoryPage from './pages/BillingHistoryPage';
+import PaymentAssistancePage from './pages/PaymentAssistancePage';
+import MyAccountPage from './pages/MyAccountPage';
+import TieredRegistrationPage from './pages/TieredRegistrationPage';
+import CommunityMappingPage from './pages/CommunityMappingPage';
+import ParaSurveyorPage from './pages/ParaSurveyorPage';
+import WomenInclusionPage from './pages/WomenInclusionPage';
+import LandSearchPage from './pages/LandSearchPage';
+import StampDutyCalculatorPage from './pages/StampDutyCalculatorPage';
+import SurveyorAccreditationPage from './pages/SurveyorAccreditationPage';
+import RevenueReportingPage from './pages/RevenueReportingPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -52,6 +76,7 @@ function App() {
             <Route path="/spatial" element={<PrivateRoute><SpatialDashboardPage /></PrivateRoute>} />
             <Route path="/gis-demo" element={<PrivateRoute><GISDemoPage /></PrivateRoute>} />
             <Route path="/titles" element={<PrivateRoute><TitlesPage /></PrivateRoute>} />
+            <Route path="/title-transfer" element={<PrivateRoute><TitleTransferPage /></PrivateRoute>} />
             <Route path="/payments" element={<PrivateRoute><PaymentsPage /></PrivateRoute>} />
             <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />
             <Route path="/blockchain" element={<PrivateRoute><BlockchainPage /></PrivateRoute>} />
@@ -64,6 +89,29 @@ function App() {
             <Route path="/audit" element={<PrivateRoute><AuditLogPage /></PrivateRoute>} />
             <Route path="/support" element={<PrivateRoute><SupportPage /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+            <Route path="/disputes" element={<PrivateRoute><DisputeResolutionPage /></PrivateRoute>} />
+            <Route path="/customary-land" element={<PrivateRoute><CustomaryLandPage /></PrivateRoute>} />
+            <Route path="/encumbrance" element={<PrivateRoute><EncumbrancePage /></PrivateRoute>} />
+            <Route path="/analytics" element={<PrivateRoute><AnalyticsDashboardPage /></PrivateRoute>} />
+            <Route path="/valuation" element={<PrivateRoute><ValuationPage /></PrivateRoute>} />
+            <Route path="/subdivision" element={<PrivateRoute><SubdivisionPage /></PrivateRoute>} />
+            <Route path="/succession" element={<PrivateRoute><SuccessionPage /></PrivateRoute>} />
+            <Route path="/leases" element={<PrivateRoute><LeaseManagementPage /></PrivateRoute>} />
+            <Route path="/notifications" element={<PrivateRoute><NotificationCenterPage /></PrivateRoute>} />
+            <Route path="/public-portal" element={<PublicPortalPage />} />
+            <Route path="/pay-online" element={<PrivateRoute><OnlinePaymentPortalPage /></PrivateRoute>} />
+            <Route path="/my-properties" element={<PrivateRoute><MyPropertiesPage /></PrivateRoute>} />
+            <Route path="/billing-history" element={<PrivateRoute><BillingHistoryPage /></PrivateRoute>} />
+            <Route path="/payment-assistance" element={<PrivateRoute><PaymentAssistancePage /></PrivateRoute>} />
+            <Route path="/my-account" element={<PrivateRoute><MyAccountPage /></PrivateRoute>} />
+            <Route path="/tiered-registration" element={<PrivateRoute><TieredRegistrationPage /></PrivateRoute>} />
+            <Route path="/community-mapping" element={<PrivateRoute><CommunityMappingPage /></PrivateRoute>} />
+            <Route path="/para-surveyors" element={<PrivateRoute><ParaSurveyorPage /></PrivateRoute>} />
+            <Route path="/women-inclusion" element={<PrivateRoute><WomenInclusionPage /></PrivateRoute>} />
+            <Route path="/land-search" element={<PrivateRoute><LandSearchPage /></PrivateRoute>} />
+            <Route path="/stamp-duty-calculator" element={<PrivateRoute><StampDutyCalculatorPage /></PrivateRoute>} />
+            <Route path="/surveyor-accreditation" element={<PrivateRoute><SurveyorAccreditationPage /></PrivateRoute>} />
+            <Route path="/revenue-reporting" element={<PrivateRoute><RevenueReportingPage /></PrivateRoute>} />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>
         </Router>

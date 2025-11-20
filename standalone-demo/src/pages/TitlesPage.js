@@ -27,12 +27,14 @@ import {
   MenuItem,
   Divider
 } from '@mui/material';
-import { CheckCircle, Cancel, Visibility, Download } from '@mui/icons-material';
+import { CheckCircle, Cancel, Visibility, Download, SwapHoriz } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function TitlesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [titles, setTitles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -128,13 +130,23 @@ export default function TitlesPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#006B3F' }}>
-          Land Titles Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          View and manage land ownership titles
-        </Typography>
+      <Box mb={3} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#006B3F' }}>
+            Land Titles Management
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            View and manage land ownership titles
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<SwapHoriz />}
+          onClick={() => navigate('/title-transfer')}
+          sx={{ bgcolor: '#006B3F' }}
+        >
+          Transfer Title
+        </Button>
       </Box>
 
       {alert && (

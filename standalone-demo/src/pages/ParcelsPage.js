@@ -26,7 +26,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
-import { LocationOn, Landscape, CheckCircle, Description, Map as MapIcon, Assessment, TrendingUp, Download, AddCircle } from '@mui/icons-material';
+import { LocationOn, Landscape, CheckCircle, Description, Map as MapIcon, Assessment, TrendingUp, Download, AddCircle, QrCode2, ContentCopy, Search } from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../services/api';
@@ -40,6 +40,48 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+// Generate ULPIN (Unique Land Parcel Identification Number)
+// Format: GH-{RegionCode}-{DistrictCode}-{Year}-{Sequence}
+const generateULPIN = (parcel) => {
+  const regionCodes = {
+    'Greater Accra': 'GAR',
+    'Ashanti': 'ASH',
+    'Western': 'WES',
+    'Eastern': 'EAS',
+    'Central': 'CEN',
+    'Northern': 'NOR',
+    'Volta': 'VOL',
+    'Upper East': 'UEA',
+    'Upper West': 'UWE',
+    'Bono': 'BON',
+    'Bono East': 'BEA',
+    'Ahafo': 'AHA',
+    'Western North': 'WNO',
+    'Oti': 'OTI',
+    'North East': 'NEA',
+    'Savannah': 'SAV'
+  };
+
+  const districtCodes = {
+    'Accra Metropolitan': 'ACC',
+    'Tema Metropolitan': 'TEM',
+    'Kumasi Metropolitan': 'KUM',
+    'Sekondi-Takoradi': 'SKD',
+    'Cape Coast Metropolitan': 'CAP',
+    'Tamale Metropolitan': 'TAM',
+    'Ho Municipal': 'HOM',
+    'Sunyani Municipal': 'SUN'
+  };
+
+  const regionCode = regionCodes[parcel.region] || parcel.region?.substring(0, 3).toUpperCase() || 'UNK';
+  const districtCode = districtCodes[parcel.district] || parcel.district?.substring(0, 3).toUpperCase() || 'UNK';
+  const year = new Date().getFullYear();
+  // Generate sequence from parcel ID or use random
+  const sequence = parcel.id ? String(parcel.id).padStart(6, '0') : String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+
+  return `GH-${regionCode}-${districtCode}-${year}-${sequence}`;
+};
+
 export default function ParcelsPage() {
   const { user } = useAuth();
   const [parcels, setParcels] = useState([]);
@@ -51,6 +93,8 @@ export default function ParcelsPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [alert, setAlert] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedULPIN, setCopiedULPIN] = useState(null);
   const [newParcel, setNewParcel] = useState({
     location: '',
     region: '',
@@ -60,6 +104,24 @@ export default function ParcelsPage() {
     owner: '',
     owner_phone: '',
     owner_id: ''
+  });
+
+  // Copy ULPIN to clipboard
+  const handleCopyULPIN = (ulpin) => {
+    navigator.clipboard.writeText(ulpin);
+    setCopiedULPIN(ulpin);
+    setTimeout(() => setCopiedULPIN(null), 2000);
+  };
+
+  // Filter parcels based on search query (searches both Parcel ID and ULPIN)
+  const filteredParcels = parcels.filter(parcel => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    const ulpin = generateULPIN(parcel).toLowerCase();
+    return parcel.parcel_id?.toLowerCase().includes(query) ||
+           ulpin.includes(query) ||
+           parcel.location?.toLowerCase().includes(query) ||
+           parcel.district?.toLowerCase().includes(query);
   });
 
   useEffect(() => {
@@ -153,57 +215,105 @@ export default function ParcelsPage() {
         </Alert>
       )}
 
+      {/* Search Box */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search by Parcel ID, ULPIN, location, or district..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+          }}
+          size="small"
+        />
+        {searchQuery && (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            Showing {filteredParcels.length} of {parcels.length} parcels
+          </Typography>
+        )}
+      </Paper>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Parcel ID</TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <QrCode2 sx={{ fontSize: 16 }} />
+                  ULPIN
+                </Box>
+              </TableCell>
               <TableCell>Location</TableCell>
-              <TableCell>Area (hectares)</TableCell>
+              <TableCell>Area (ha)</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {parcels.map(parcel => (
-              <TableRow key={parcel.id}>
-                <TableCell>{parcel.parcel_id}</TableCell>
-                <TableCell>{parcel.location}, {parcel.district}</TableCell>
-                <TableCell>{parcel.area}</TableCell>
-                <TableCell>{parcel.land_type}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={parcel.status}
-                    color={parcel.status === 'registered' ? 'success' : 'warning'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
+            {filteredParcels.map(parcel => {
+              const ulpin = generateULPIN(parcel);
+              return (
+                <TableRow key={parcel.id}>
+                  <TableCell>{parcel.parcel_id}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                        {ulpin}
+                      </Typography>
+                      <Button
+                        size="small"
+                        sx={{ minWidth: 'auto', p: 0.5 }}
+                        onClick={() => handleCopyULPIN(ulpin)}
+                        title="Copy ULPIN"
+                      >
+                        {copiedULPIN === ulpin ? (
+                          <CheckCircle sx={{ fontSize: 14, color: 'success.main' }} />
+                        ) : (
+                          <ContentCopy sx={{ fontSize: 14 }} />
+                        )}
+                      </Button>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{parcel.location}, {parcel.district}</TableCell>
+                  <TableCell>{parcel.area}</TableCell>
+                  <TableCell>{parcel.land_type}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={parcel.status}
+                      color={parcel.status === 'registered' ? 'success' : 'warning'}
                       size="small"
-                      variant="outlined"
-                      onClick={() => handleViewDetails(parcel.id)}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="success"
-                      startIcon={<Assessment />}
-                      onClick={() => {
-                        setSelectedParcel(parcel);
-                        setValuationOpen(true);
-                      }}
-                    >
-                      Get Valuation
-                    </Button>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleViewDetails(parcel.id)}
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        startIcon={<Assessment />}
+                        onClick={() => {
+                          setSelectedParcel(parcel);
+                          setValuationOpen(true);
+                        }}
+                      >
+                        Get Valuation
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -246,6 +356,38 @@ export default function ParcelsPage() {
                   color={selectedParcel.status === 'registered' ? 'success' : 'warning'}
                   size="small"
                 />
+              </Grid>
+
+              {/* ULPIN Display */}
+              <Grid item xs={12}>
+                <Box sx={{
+                  p: 2,
+                  bgcolor: '#E3F2FD',
+                  borderRadius: 1,
+                  border: '1px solid #90CAF9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <QrCode2 sx={{ fontSize: 16 }} />
+                      ULPIN (Unique Land Parcel Identification Number)
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1565C0' }}>
+                      {generateULPIN(selectedParcel)}
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={copiedULPIN === generateULPIN(selectedParcel) ? <CheckCircle /> : <ContentCopy />}
+                    onClick={() => handleCopyULPIN(generateULPIN(selectedParcel))}
+                    color={copiedULPIN === generateULPIN(selectedParcel) ? 'success' : 'primary'}
+                  >
+                    {copiedULPIN === generateULPIN(selectedParcel) ? 'Copied!' : 'Copy'}
+                  </Button>
+                </Box>
               </Grid>
 
               <Grid item xs={6}>
@@ -569,6 +711,11 @@ export default function ParcelsPage() {
               </Grid>
 
               <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">ULPIN</Typography>
+                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>{generateULPIN(selectedParcel)}</Typography>
+              </Grid>
+
+              <Grid item xs={6}>
                 <Typography variant="body2" color="text.secondary">Location</Typography>
                 <Typography variant="body1">{selectedParcel.location}, {selectedParcel.district}</Typography>
               </Grid>
@@ -578,7 +725,7 @@ export default function ParcelsPage() {
                 <Typography variant="body1">{selectedParcel.area} hectares ({(selectedParcel.area * 2.47105).toFixed(2)} acres)</Typography>
               </Grid>
 
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary">Land Type</Typography>
                 <Typography variant="body1">{selectedParcel.land_type}</Typography>
               </Grid>

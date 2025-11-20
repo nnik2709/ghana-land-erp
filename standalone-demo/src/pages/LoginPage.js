@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Container, Paper, TextField, Button, Typography, Box, Alert, Card, CardContent, Grid
+  Container, Paper, TextField, Button, Typography, Box, Alert
 } from '@mui/material';
-import api from '../services/api';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [demoUsers, setDemoUsers] = useState([]);
   const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
@@ -20,10 +18,6 @@ export default function LoginPage() {
       navigate(routes[user.role] || '/');
     }
   }, [isAuthenticated, user, navigate]);
-
-  useEffect(() => {
-    api.get('/auth/demo-users').then(res => setDemoUsers(res.data.data));
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -48,24 +42,6 @@ export default function LoginPage() {
             {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
             <Button fullWidth variant="contained" size="large" type="submit" sx={{ mt: 3, py: 1.5 }}>Login</Button>
           </form>
-
-          <Box mt={4}>
-            <Typography variant="h6" gutterBottom>📋 Demo Credentials</Typography>
-            <Grid container spacing={2}>
-              {demoUsers.map((u, i) => (
-                <Grid item xs={12} sm={6} key={i}>
-                  <Card variant="outlined" sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }} onClick={() => { setUsername(u.username); setPassword('demo123'); }}>
-                    <CardContent>
-                      <Typography variant="subtitle1" fontWeight="bold">{u.role}</Typography>
-                      <Typography variant="body2" color="text.secondary">Username: {u.username}</Typography>
-                      <Typography variant="body2" color="text.secondary">Password: {u.password}</Typography>
-                      <Typography variant="caption" color="primary">{u.description}</Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
         </Paper>
       </Container>
     </Box>
